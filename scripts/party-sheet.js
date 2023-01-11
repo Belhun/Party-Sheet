@@ -25,8 +25,7 @@ class PartySheet {
     }
     // NEED this To initialize Form Application and set Settings
     static initialize() {
-        
-        // this.ToDoListConfig = new ToDoListConfig();
+        this.PartySheetConfig = new PartySheetConfig();
         
         //Settings
         // CHANGE: name and hint when Localisation changes
@@ -41,6 +40,23 @@ class PartySheet {
         });
     }
 }
+
+Hooks.on('renderActorDirectory', (app, html, data) => {
+    const directoryiner = html.find(`.header-actions`);
+
+
+    // insert a button at the end of this element
+    directoryiner.append(
+        `<button class="party-sheet-icon-button"><i class="fa-thin fa-users"></i> PartySheet </button>`
+    );
+
+    //register an event listener for this button
+    html.on('click', '.party-sheet-icon-button', (event) => {
+        var user = game.userId;
+        PartySheet.PartySheetConfig.render(true, {user});
+        console.log(`${PartySheet.ID} | Button Clicked`);
+    });
+}); 
 
 
 Hooks.once('init', () => {
@@ -114,7 +130,7 @@ class TresuresSystem{
     // gp
     // pp
     // sp
-    static collectPartyCoins(GMId) {
+    static CollectPartyCoins(GMId) {
         //Find All Player Characters(Will be changeing this once i get the character system working)
         const GetAllPlayerCharacter = this.getSelectedCharacter(GMId);
         //finds the currency of each character
@@ -144,7 +160,7 @@ class TresuresSystem{
 
     //Collect All Player Items
     // Player items
-    static AllPlayerItems(GMId) {
+    static CollectPartyItems(GMId) {
         //Get All Player Characters and gets all there Items
         const JumbledTogetherItems = this.getSelectedCharacter(GMId).map(items => items.items);
         //Filters Items by the Type of Items, weapons , backpack , equipment, consumable, loot.
@@ -293,20 +309,21 @@ class PartyMembersData{
 
     
 // Makeing Form Aplications
-class ToDoListConfig extends FormApplication{
+class PartySheetConfig extends FormApplication{
     static get defaultOptions() {
         const defaults = super.defaultOptions;
     
         const overrides = {
-            height: 'auto',
+            // height: 'auto',
             id: 'party-sheet',
             template: PartySheet.TEMPLATES.PartySheet,
             title: 'Party Sheet',
+            resizable: true,
             userId: game.userId, 
             closeOnSubmit: false, //Do not close when Submitted
             submitOnChange: true, // submit when any input changes
         };
-    
+
         const mergedOptions = foundry.utils.mergeObject(defaults, overrides);
         
         return mergedOptions;
@@ -314,7 +331,9 @@ class ToDoListConfig extends FormApplication{
     // Grabs the ID from the options of this Form and Grabs and returns the ToDo's as 'todos'(can now be used in the hbs)
     getData(options){
         return {
-            todos: TresuresSystem.AllPlayerItems(options.userId)
+            items: TresuresSystem.CollectPartyItems(options.userId),
+            Coins: TresuresSystem.CollectPartyCoins(options.userId),
+            Characters: TresuresSystem.getSelectedCharacter(options.userId)
         }
     }
 
@@ -328,7 +347,7 @@ class ToDoListConfig extends FormApplication{
     //     ToDoList.log(true, 'saving', {
     //         formData,
     //         expandedData
-    //       });
+    //     });
     //     await ToDoListData.updateUserToDos(this.options.userId, expandedData);
 
     //     this.render();
@@ -338,7 +357,7 @@ class ToDoListConfig extends FormApplication{
         super.activateListeners(html);
     
         html.on('click', "[data-action]", this._handleButtonClick.bind(this));
-      }
+    }
     
     async _handleButtonClick(event) {
         // Determins what kind of event where trying to do
@@ -357,11 +376,13 @@ class ToDoListConfig extends FormApplication{
             }
             case 'delete': {
                 const confirmed = await Dialog.confirm({
-                    title: game.i18n.localize("TODO-LIST.confirms.deleteConfirm.Title"),
-                    content: game.i18n.localize("TODO-LIST.confirms.deleteConfirm.Content")
+                    // title: game.i18n.localize("TODO-LIST.confirms.deleteConfirm.Title"),
+                    // content: game.i18n.localize("TODO-LIST.confirms.deleteConfirm.Content")
+                    title: "Confirm Deletion",
+                    content: "Are you sure you want to delete this To-Do? This action cannot be undone."
                 });
                 if (confirmed) {
-                    await ToDoListData.deleteToDo(toDoId);
+                    await PartyMembersData.deletePMember(toDoId);
                     this.render(); 
                 }
                 
