@@ -50,7 +50,7 @@ Hooks.once('init', () => {
 class TresuresSystem{
     
     //Gets all The character with a user Attached and cleans it up for me
-    static GetAllPlayerCharacter() {
+    static getAllPlayerCharacter() {
         //const Characters = game.users.map(user => user.character).filter(c => c).sort((a,b) => {if(a.name < b.name){return -1; } return 1});
 
         // -Get All users, 
@@ -63,19 +63,44 @@ class TresuresSystem{
         return Characters;
     }
     
+    static getSelectedCharacter(GMId) {
+
+        if (PartyMembersData.doseGMHavePartyMembers(GMId) == false){
+            console.log(`${PartySheet.ID} | Need to Add Party Members to this GM`);
+            return null;
+        }
+
+        //const Characters = game.users.map(user => user.character).filter(c => c).sort((a,b) => {if(a.name < b.name){return -1; } return 1});
+        const PartyMembersForUser = PartyMembersData.getPartyMembersForUser(GMId);
+        const PartyMemberEntries = Object.entries(PartyMembersForUser);
+        //stores Character IDs
+        var PartyMembersid = [];
+        // Adds the Character ids to PartyMembers
+        for (let i = 0; i < PartyMemberEntries.length; i++) {
+            PartyMembersid.push(PartyMemberEntries[i][1].memberId);
+        }
+        // console.log(PartyMembersid);
+        // -Get All Actors, 
+        // -for ever PartyMemberid we find the Actor connected to the id
+        // Assigns all the Characters that are found to Characters
+        var Characters = []
+        for (let r = 0; r < PartyMembersid.length; r++) {
+            Characters.push(game.actors.find(c => c.id == PartyMembersid[r]));
+        }
+
+        
+        
+        
+        //returns an array of 5e character data
+        return Characters;
+    }
    
     //Assigning Party memebers
     //Make a way to Allow Gm to only select the players characters they want to get
     //Current Party Memebers
     //Start With an Empty Roster then allow DM to Add or Deleate Actors from his list 
     //Or Click a button and Reorginze, adding all users who have an asshighned character
-    static AssignPartyMembers() {
-        //Get a Current List of Characters in the Party Sheet
-        //Assigns a Flag to GM's that will store the Party members we are useing(We should assume the person in the menu is a GM)
-        //find GM's
-        CurrentGM = game.users.current
-        
-    }
+    
 
 
 
@@ -89,9 +114,9 @@ class TresuresSystem{
     // gp
     // pp
     // sp
-    static collectPartyCoins() {
+    static collectPartyCoins(GMId) {
         //Find All Player Characters(Will be changeing this once i get the character system working)
-        const GetAllPlayerCharacter = this.GetAllPlayerCharacter();
+        const GetAllPlayerCharacter = this.getSelectedCharacter(GMId);
         //finds the currency of each character
         const PartyCoinsArray = GetAllPlayerCharacter.map(Characters => Characters.system).map(Systems => Systems.currency);
         // adds up all the partys 
@@ -117,11 +142,11 @@ class TresuresSystem{
     
 
 
-
+    //Collect All Player Items
     // Player items
-    static AllPlayerItems() {
+    static AllPlayerItems(GMId) {
         //Get All Player Characters and gets all there Items
-        const JumbledTogetherItems = this.GetAllPlayerCharacter().map(items => items.items);
+        const JumbledTogetherItems = this.getSelectedCharacter(GMId).map(items => items.items);
         //Filters Items by the Type of Items, weapons , backpack , equipment, consumable, loot.
         const AllunsortedItems =  JumbledTogetherItems.map(c => c._source).flat(1);
         const weaponsItems = AllunsortedItems.filter(item => item.type == 'weapons');
@@ -144,7 +169,7 @@ class TresuresSystem{
             if (currentIndex == 0){
                 return CurrentItem;
             }
-            // CurrentlysortedItems = CurrentlysortedItems.flat();
+            CurrentlysortedItems = CurrentlysortedItems.flat();
             // this for each loop goes over the current accumunlation of items and checks to see if there is a dupicate item.
             // if there is item that has the same Name it will increase the quantity of the item by the quantity of the dupicate item.
             for (let i = 0; i < CurrentlysortedItems.length; i++) {
@@ -159,22 +184,21 @@ class TresuresSystem{
         // Add an array with the Name and ID of the Character and a Sorted List of Items they have
 
         return CondencedItems;
-
-
     }
-
-    //Collect and Displauy All Player Items
-
-
-    //Allow to Displayer Totals for how many things peaple have. 
-    
-    // Keep Track of whos is what
-    // - Every time an item is added a Flag is Added to it called Owned by,
-    //    And when we display all the items we have a section that dsiplays who owns and how many
-
 }
 
+// Party Member info,
+// This data is used to store info in the GM's Flags Showing what Characters this GM wants to see in there PartySheet
 class PartyMembersData{
+    static doseGMHavePartyMembers(GMid){
+        if (Object.entries(this.getPartyMembersForUser(GMid)).length != 0){
+            // console.log(`${PartySheet.ID} | There are Party Members in this GM ID`);
+            return true;
+        } else {
+            // console.log(`${PartySheet.ID} | There are No Party Members in this GM ID`);
+            return false;
+        }
+    }
     static getPartyMembersForUser(userId) {
         return game.users.get(userId)?.getFlag(PartySheet.ID, PartySheet.FLAGS.PSHEET);
     }
@@ -183,11 +207,10 @@ class PartyMembersData{
     }
     /**
      * A single ToDo in our list of Todos.
-     * @typedef {Object} partySheet
-     * @property {string} id - A unique ID to identify this todo.
-     * @property {string} toDoData - The text of the todo.
-     * @property {boolean} isDone - Marks whether the todo is done.
-     * @property {string} userId - The user's id which owns this ToDo.
+     * @typedef {Object} PartyMember
+     * @property {string} id - A unique ID to identify this partymember in the PartySheet.
+     * @property {string} GMId - the GM's Id being used.
+     * @property {string} memberId - The Party Members Id Whitch can be used to find the character sheet
      */
     static createPartyMember(GMId, partMemberData) {
         // we take the User data and make a list in Flags of the users that we are going to be useing
@@ -206,11 +229,20 @@ class PartyMembersData{
         // update the database with the new Todos
         return game.users.get(GMId)?.setFlag(PartySheet.ID, PartySheet.FLAGS.PSHEET, newPartyMember);
     }
+    static noAssigndPartyMembers(GMid) {
+        // if there are No Characters
+        if (Object.entries(this.getPartyMembersForUser(GMid)).length != 0){
+            return console.log(`${PartySheet.ID} |There are Party Members in this GM id`);
+        }
 
-    //allToDos
-    // mapping of ToDo id to User id. Since our ToDo object has userId on it already, 
-    // this could be accomplished with a big object containing all ToDos for all Users indexed by ToDo id.
-    // We’ll leverage reduce for this inside a getter.
+        var allPlayerCharacters = game.users.map(user => user.character).filter(c => c)
+        for(let i = 0; i < allPlayerCharacters.length; i++) {
+            this.createPartyMember(GMid, allPlayerCharacters[i])
+        }
+        return console.log(`${PartySheet.ID} | All Party Members Added`);
+    }
+
+    //Get allParty Members in the Gm Flags
     static get allPMembers() {
         const allPartyMembers = game.users.reduce((accumulator, user) => {
           const userTodos = this.getPartyMembersForUser(user.id);
@@ -221,22 +253,23 @@ class PartyMembersData{
         }, {});
         
         return allPartyMembers;
-      }
-        //       updateToDo
-        // Now that we have a way to lookup which User a particular ToDo belongs to we can make an update method that accepts only ToDo id.
-    static updatePMembers(MemberId, updateData) {
-        const relevantToDo = this.allPMembers[MemberId];
-    
-        // construct the update to send
-        const update = {
-          [MemberId]: updateData
-        }
-    
-        // update the database with the updated ToDo list
-        return game.users.get(relevantToDo.userId)?.setFlag(ToDoList.ID, ToDoList.FLAGS.TODOS, update);
     }
+    
+    //Update the info in PartyMembers
+    //CURENTLY NOT USED
+    // static updatePMembers(MemberId, updateData) {
+    //     const relevantToDo = this.allPMembers[MemberId];
+    
+    //     // construct the update to send
+    //     const update = {
+    //       [MemberId]: updateData
+    //     }
+    
+    //     // update the database with the updated ToDo list
+    //     return game.users.get(relevantToDo.userId)?.setFlag(ToDoList.ID, ToDoList.FLAGS.TODOS, update);
+    // }
 
-    //Deleateing PartyMember
+    //Deleate Party Members from the GM's List
     static deletePMember(MemberId) {
         const relevantMember = this.allPMembers[MemberId];
         console.log(relevantMember);
@@ -247,5 +280,97 @@ class PartyMembersData{
         console.log(game.userId);
         // update the database with the updated ToDo list
         return game.users.get(game.userId)?.setFlag(PartySheet.ID, PartySheet.FLAGS.PSHEET, keyDeletion);
+    }
+}
+
+
+
+    //Allow to Displayer Totals for how many things peaple have. 
+    
+    // Keep Track of who's is what
+    // - Every time an item is added a Flag is Added to it called Owned by,
+    //   And when we display all the items we have a section that dsiplays who owns and how many
+
+    
+// Makeing Form Aplications
+class ToDoListConfig extends FormApplication{
+    static get defaultOptions() {
+        const defaults = super.defaultOptions;
+    
+        const overrides = {
+            height: 'auto',
+            id: 'party-sheet',
+            template: PartySheet.TEMPLATES.PartySheet,
+            title: 'Party Sheet',
+            userId: game.userId, 
+            closeOnSubmit: false, //Do not close when Submitted
+            submitOnChange: true, // submit when any input changes
+        };
+    
+        const mergedOptions = foundry.utils.mergeObject(defaults, overrides);
+        
+        return mergedOptions;
+    }
+    // Grabs the ID from the options of this Form and Grabs and returns the ToDo's as 'todos'(can now be used in the hbs)
+    getData(options){
+        return {
+            todos: TresuresSystem.AllPlayerItems(options.userId)
+        }
+    }
+
+    /* 
+    When the Data from todo-list.hbs is changes in foundry it gives us data from each Variable in the form,
+    we then Expand the data to give updateUserToDos and update the data. 
+    */
+    // async _updateObject(event, formData) {
+        
+    //     const expandedData = foundry.utils.expandObject(formData);
+    //     ToDoList.log(true, 'saving', {
+    //         formData,
+    //         expandedData
+    //       });
+    //     await ToDoListData.updateUserToDos(this.options.userId, expandedData);
+
+    //     this.render();
+    // }
+
+    activateListeners(html) {
+        super.activateListeners(html);
+    
+        html.on('click', "[data-action]", this._handleButtonClick.bind(this));
+      }
+    
+    async _handleButtonClick(event) {
+        // Determins what kind of event where trying to do
+        const clickedElement = $(event.currentTarget);
+        //The action we are trying to Do either Create of Delete
+        const action = clickedElement.data().action;
+        //contains the ID of the ToDo where interacting with
+        const toDoId = clickedElement.parents('[data-todo-id]')?.data()?.todoId;
+
+
+        switch (action) {
+            case 'create' : {
+                await ToDoListData.createToDo(this.options.userId);
+                this.render();
+                break;
+            }
+            case 'delete': {
+                const confirmed = await Dialog.confirm({
+                    title: game.i18n.localize("TODO-LIST.confirms.deleteConfirm.Title"),
+                    content: game.i18n.localize("TODO-LIST.confirms.deleteConfirm.Content")
+                });
+                if (confirmed) {
+                    await ToDoListData.deleteToDo(toDoId);
+                    this.render(); 
+                }
+                
+                break;
+            }
+            default: 
+                ToDoList.log(true, "Got a unknown Action", {action, toDoId});
+            
+        }
+        ToDoList.log(true, 'Button CLicked!', {action, toDoId});
     }
 }
