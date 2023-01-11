@@ -20,6 +20,8 @@
 	"compatibility": {
 		"minimum": "10",
 		"verified": "10"
-	}
-    
+	},
+    "url": "https://github.com/Belhun/Party-Sheet",
+	"manifest": "",
+	"download": ""
 }
