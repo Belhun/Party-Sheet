@@ -1,17 +1,46 @@
-<form>
-  <ul class="todo-list flexcol">
-    {{#each todos}}
-    <li class="flexrow" data-todo-id="{{id}}">
-      <input type="checkbox" name="{{id}}.isDone" title="{{localize "TODO-LIST.mark-done"}}" data-dtype="Boolean" {{checked isDone}} />
-
-      <input type="text" value="{{label}}" name="{{id}}.label" data-dtype="String" />
-
-      <button type="button" title="{{localize "TODO-LIST.delete-todo"}}" data-action="delete" class="flex0 todo-list-icon-button">
-        <i class="fas fa-trash"></i>
-      </button>
-    </li>
-    {{/each}}
-  </ul>
-
-  <button type="button" data-action="create"><i class="fas fa-plus"></i> {{localize "TODO-LIST.add-todo"}}</button>
+<form class="main-party-box">
+  <div class="item-a">
+    <ul class="item-list inventory-list">
+      {{#each items}}
+      <li class="item flexrow">
+        <div class="party-item-img" style="background-image: url('{{img}}')"></div>
+        <h4>{{name}}</h4>
+        <h4>{{system.quantity}}</h4>
+      </li>
+      {{/each}}
+    </ul>
+  </div>
+  <div class="item-b">
+    <ul class="item-list inventory-list">
+      {{#each items}}
+      <li class="item flexrow">
+        <div class="party-item-img" style="background-image: url('{{img}}')"></div>
+        <h4>{{name}}</h4>
+        <h4>{{system.quantity}}</h4>
+      </li>
+      {{/each}}
+    </ul>
+  </div>
+  <div class="item-c">
+    <ul class="item-list inventory-list">
+      {{#each items}}
+      <li class="item flexrow">
+        <div class="party-item-img" style="background-image: url('{{img}}')"></div>
+        <h4>{{name}}</h4>
+        <h4>{{system.quantity}}</h4>
+      </li>
+      {{/each}}
+    </ul>
+  </div>
+  <div class="item-d">
+    <ul class="item-list inventory-list">
+      {{#each items}}
+      <li class="item flexrow">
+        <div class="party-item-img" style="background-image: url('{{img}}')"></div>
+        <h4>{{name}}</h4>
+        <h4>{{system.quantity}}</h4>
+      </li>
+      {{/each}}
+    </ul>
+  </div>
 </form>
