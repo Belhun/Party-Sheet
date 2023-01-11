@@ -1,0 +1,25 @@
+{
+	"id": "party-sheet",
+	"title": "(Current) 5E Party Sheet",
+	"description": "Add's a Sheet where you can manage party inventory and give Items and more",
+	"languages": [{
+		"lang": "en",
+		"name": "English",
+		"path": "languages/en.json"
+	}],
+	"authors": [{
+		"name": "Belhun"
+	}],
+	"version": "0.0.1",
+	"scripts": [
+		"scripts/party-sheet.js"
+	],
+	"styles": [
+		"styles/party-sheet.css"
+	],
+	"compatibility": {
+		"minimum": "10",
+		"verified": "10"
+	}
+    
+}
